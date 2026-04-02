@@ -7,8 +7,9 @@ const dbConnection = async() => {
         console.log('DB Online');
 
     } catch (error) {
-        console.log('ERROR REAL:', error);
-    }
+        console.log(error);
+        throw new Error('Error a la hora de iniciar la DB');
+    }   
 };
 
 module.exports = {
