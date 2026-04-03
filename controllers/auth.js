@@ -1,6 +1,7 @@
 const { response } = require('express');
 const bcrypt = require('bcryptjs');
 const Usuario = require('../models/Usuario');
+const { generarJWT } = require('../helpers/jwt');
 
 const crearUsuario = async ( req, res = response ) => {
     const { email, password } = req.body;
@@ -19,17 +20,20 @@ const crearUsuario = async ( req, res = response ) => {
         const salt = bcrypt.genSaltSync();
         usuario.password = bcrypt.hashSync( password, salt );
         
-
         await usuario.save();
 
-        res.status(201).json({
+        const token = await generarJWT( usuario.id, usuario.name );
+
+        return res.status(201).json({
             ok: true,
             uid: usuario.id,
-            name: usuario.name
+            name: usuario.name,
+            token
         });
+
     } catch (error) {
         console.log(error);
-        res.status(500).json({
+        return res.status(500).json({
             ok: false,
             msg: 'Error creating user'
         });
@@ -50,37 +54,35 @@ const loginUsuario = async (req, res = response) => {
         }
         
         const validPassword = bcrypt.compareSync (password, usuario.password); 
-        if (! validPassword) {
+
+        if ( !validPassword) {
             return res.status(400).json({
                 ok: false,
                 msg: 'Invalid password'
             });
         }
-        res.json({
+
+        const token = await generarJWT( usuario.id, usuario.name );
+
+        return res.json({
             ok: true,
             uid: usuario.id,
             name: usuario.name,
-            msg: 'login',
+            token
         });
 
     } catch (error) {
         console.log(error);
-        res.status(500).json({  
+        return res.status(500).json({  
             ok: false,
             msg: 'Error logging in'
         });
     }
 
-    res.status(200).json({
-        ok: true,
-        msg: 'login',
-        email,
-        password
-    })
-};
+} ;
 
 const revalidarToken = ( req, res = response ) => {
-    res.status(200).json({
+    return res.status(200).json({
         ok: true,
         msg: 'renew'
     })
